@@ -215,8 +215,8 @@ const SEED_SETLISTS = [{
    Shared bits
    ========================================================================= */
 const inputStyle = {
-  width: "100%", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10,
-  padding: "12px 14px", color: C.text, fontFamily: FONT, fontSize: 16, boxSizing: "border-box",
+  width: "100%", height: 58, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10,
+  padding: "0 14px", color: C.text, fontFamily: FONT, fontSize: 16, boxSizing: "border-box",
 };
 const iconBtnStyle = {
   width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent",
@@ -364,7 +364,7 @@ function NaturalDropdown({ value, onChange }) {
               const active = n === value;
               return (
                 <div key={n} onClick={() => { onChange(n); setOpen(false); }} style={{
-                  padding: "12px 14px", fontFamily: FONT, fontSize: 15, fontWeight: 700,
+                  padding: "12px 14px", fontFamily: FONT, fontSize: 15, fontWeight: 700, textAlign: "center",
                   color: active ? C.accent : C.text, background: active ? C.accentSoft : "transparent",
                 }}>
                   {n}
@@ -539,7 +539,7 @@ function PianoScreen() {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
       pianoWaveRef.current = buildPianoWave(audioCtxRef.current);
     }
-    if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume().catch(() => {});
+    if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume().catch(() => { });
     // Unlock the silent video once (a key-press is a user gesture) rather
     // than on every note — repeatedly calling .play() on every keypress
     // was the actual source of the audible latency, since hidden/offscreen
@@ -574,7 +574,7 @@ function PianoScreen() {
     osc.setPeriodicWave(pianoWaveRef.current);
     osc.frequency.value = freq;
     osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-    osc.onended = () => { try { osc.disconnect(); filter.disconnect(); gain.disconnect(); } catch {} };
+    osc.onended = () => { try { osc.disconnect(); filter.disconnect(); gain.disconnect(); } catch { } };
     osc.start(now);
     return { osc, gain };
   };
@@ -587,7 +587,7 @@ function PianoScreen() {
       voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
       voice.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
       voice.osc.stop(now + 0.16);
-    } catch {}
+    } catch { }
   };
   const keyAt = (x, y) => {
     const hitEl = document.elementFromPoint(x, y);
@@ -648,7 +648,7 @@ function PianoScreen() {
   }, []);
 
   return (
-    <div style={{ height: "calc(100vh - 84px)" }}>
+    <div style={{ height: "100%" }}>
       <video
         ref={silentVideoRef}
         src={SILENT_VIDEO_SRC}
@@ -794,6 +794,7 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
     <div
       style={{
         position: "fixed", inset: 0, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 100, overflowY: "auto",
+        paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
       }}
@@ -859,7 +860,7 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
           <textarea
             value={description} onChange={(e) => setDescription(e.target.value)}
             placeholder={"e.g. Sarah's key is A, Mike's key is G\nKeyboard style: gospel shuffle, 6/8 feel"}
-            style={{ ...inputStyle, minHeight: 70, resize: "vertical" }}
+            style={{ ...inputStyle, height: "auto", padding: "12px 14px", minHeight: 70, resize: "vertical" }}
           />
         </Field>
 
@@ -876,7 +877,7 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
                 </div>
                 <textarea value={sec.numbers} onChange={(e) => updateSection(sec.id, "numbers", e.target.value)}
                   placeholder={"1        4\n6m       4"}
-                  style={{ ...inputStyle, background: C.surface3, fontFamily: MONO, minHeight: 90, resize: "vertical" }} />
+                  style={{ ...inputStyle, height: "auto", padding: "12px 14px", background: C.surface3, fontFamily: MONO, minHeight: 90, resize: "vertical" }} />
               </div>
             ))}
           </div>
@@ -949,7 +950,7 @@ function SongsScreen({ songs, onOpen, onAdd, onEdit }) {
     .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
 
   return (
-    <div style={{ height: "calc(100vh - 84px)", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "0 0 auto", padding: "22px 20px 14px", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <div>
@@ -992,7 +993,7 @@ function SongPickerScreen({ songs, selectedIds, onToggle, onClose, setlistName, 
     else setNameDraft(setlistName ?? "");
   };
   return (
-    <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 150, display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 150, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box" }}>
       <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}` }}>
         <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 6 }}><ChevronLeft size={22} /></button>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1057,7 +1058,7 @@ function SongExportPicker({ songs, onClose, onExport }) {
   });
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 150, display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 150, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box" }}>
       <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}` }}>
         <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 6 }}><ChevronLeft size={22} /></button>
         <div style={{ flex: 1, fontSize: 17, fontWeight: 600 }}>Send Songs</div>
@@ -1275,7 +1276,7 @@ function SongDetailScreen({ song, contextKey, onKeyChange, onBack, onEdit, onDel
     <div
       style={{
         position: "fixed", inset: 0, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 100,
-        display: "flex", flexDirection: "column",
+        display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
       }}
@@ -1441,7 +1442,7 @@ function SetlistStageScreen({ setlist, songs, onBack, onUpdateSetlist, onOpenSon
     <div
       style={{
         position: "fixed", top: 0, left: 0, right: 0, bottom: 84, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 80,
-        display: "flex", flexDirection: "column",
+        display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
       }}
@@ -1520,7 +1521,7 @@ function SetlistsScreen({ setlists, onOpenStage, onCreate, onDelete, creating, s
   const filtered = setlists.filter((sl) => sl.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <div style={{ height: "calc(100vh - 84px)", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "0 0 auto", padding: "22px 20px 14px", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <div>
@@ -1588,7 +1589,7 @@ function SettingsScreen({ fontSize, setFontSize, textAlign, setTextAlign, bold, 
   };
 
   return (
-    <div style={{ height: "calc(100vh - 84px)", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "0 0 auto", padding: "22px 20px 14px", boxSizing: "border-box" }}>
         <div style={{ fontSize: 26, fontWeight: 700 }}>Settings</div>
       </div>
@@ -1789,7 +1790,7 @@ export default function App() {
 
   const exportSongsByIds = async (ids) => {
     const chosen = songs.filter((s) => ids.includes(s.id));
-    const result = await shareOrDownloadJSON(`songs-export-${Date.now()}.json`, {
+    const result = await shareOrDownloadJSON(`Songs_Export.json`, {
       type: "songs",
       exportedAt: new Date().toISOString(),
       instructions: "Import into the Songs library. Each song is added as-is; if its title + artist already exists on the importing device, a \" (n)\" suffix is appended to the title so both copies are kept.",
@@ -1876,24 +1877,27 @@ export default function App() {
     <div
       ref={rootRef}
       style={{
-        height: 780, maxHeight: "92vh", width: "100%", maxWidth: 390, margin: "0 auto", background: C.bg, color: C.text,
-        fontFamily: FONT, position: "relative", overflow: "hidden", border: `1px solid ${C.border}`, touchAction: "pan-x pan-y",
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0, height: "100dvh", width: "100%", maxWidth: 390,
+        margin: "0 auto", background: C.bg, color: C.text, fontFamily: FONT, overflow: "hidden",
+        border: "none", boxSizing: "border-box", touchAction: "pan-x pan-y",
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
       <style>{`
+        html, body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; background: ${C.bg}; }
         .bpm-number-input::-webkit-outer-spin-button, .bpm-number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .bpm-number-input { -moz-appearance: textfield; }
         button { -webkit-tap-highlight-color: transparent; transition: transform 90ms ease, opacity 90ms ease; -webkit-touch-callout: none; }
         button:active { transform: scale(0.96); opacity: 0.85; }
         input:focus, textarea:focus { outline: none; border-color: ${C.accent}; box-shadow: 0 0 0 2px ${C.accentDim}; }
         input::placeholder, textarea::placeholder { color: ${C.textFaint}; opacity: 1; }
-        * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; }
         input, textarea { -webkit-user-select: text; user-select: text; }
         *::-webkit-scrollbar { display: none; }
         * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
 
-      <div style={{ paddingBottom: 84, height: "100%", overflow: "hidden" }}>
+      <div style={{ paddingBottom: 84, height: "100%", overflow: "hidden", boxSizing: "border-box" }}>
         {tab === "piano" && <PianoScreen />}
         {tab === "songs" && (
           <SongsScreen songs={songs} onOpen={(s) => setViewing({ songId: s.id, fromSetlistId: null })} onAdd={() => setEditingSong(null)} onEdit={(s) => setEditingSong(s)} />
