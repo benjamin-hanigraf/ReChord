@@ -648,6 +648,20 @@ function PianoScreen() {
       window.removeEventListener("pointercancel", handleUp);
       activeRef.current.forEach((v) => stopVoice(v.voice));
       activeRef.current.clear();
+      // Without this, leaving the Piano tab (which unmounts this component)
+      // and coming back creates a brand-new AudioContext every time without
+      // ever releasing the old one. Each leftover context keeps its own
+      // real-time audio thread alive in the background, so the longer the
+      // app stays open and the more times this tab is revisited, the more
+      // contexts pile up — which is what was showing up as growing
+      // touch-to-sound latency (and would eventually hit the browser's hard
+      // cap on concurrent AudioContexts).
+      if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+        audioCtxRef.current.close().catch(() => { });
+      }
+      audioCtxRef.current = null;
+      pianoWaveRef.current = null;
+      videoUnlockedRef.current = false;
     };
   }, []);
 
@@ -1447,7 +1461,7 @@ function SetlistStageScreen({ setlist, songs, onBack, onUpdateSetlist, onOpenSon
   return (
     <div
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: "calc(47px + max(28px, 10px + env(safe-area-inset-bottom, 0px)))", background: C.bg, color: C.text, fontFamily: FONT, zIndex: 80,
+        position: "fixed", top: 0, left: 0, right: 0, bottom: "calc(55px + max(36px, 14px + env(safe-area-inset-bottom, 0px)))", background: C.bg, color: C.text, fontFamily: FONT, zIndex: 80,
         display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
@@ -1701,7 +1715,7 @@ function BottomNav({ active, onChange }) {
   ];
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30 }}>
-      <div style={{ display: "flex", background: "#000000", paddingTop: 10, paddingBottom: "max(28px, calc(10px + env(safe-area-inset-bottom, 0px)))" }}>
+      <div style={{ display: "flex", background: "#000000", paddingTop: 18, paddingBottom: "max(36px, calc(14px + env(safe-area-inset-bottom, 0px)))" }}>
         {items.map(({ id, label, icon: Icon }) => {
           const isActive = active === id;
           return (
@@ -1904,7 +1918,7 @@ export default function App() {
         * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
 
-      <div style={{ paddingBottom: "calc(47px + max(28px, 10px + env(safe-area-inset-bottom, 0px)))", height: "100%", overflow: "hidden", boxSizing: "border-box" }}>
+      <div style={{ paddingBottom: "calc(55px + max(36px, 14px + env(safe-area-inset-bottom, 0px)))", height: "100%", overflow: "hidden", boxSizing: "border-box" }}>
         {tab === "piano" && <PianoScreen />}
         {tab === "songs" && (
           <SongsScreen songs={songs} onOpen={(s) => setViewing({ songId: s.id, fromSetlistId: null })} onAdd={() => setEditingSong(null)} onEdit={(s) => setEditingSong(s)} />
