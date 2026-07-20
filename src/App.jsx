@@ -25,7 +25,7 @@ const C = {
   danger: "#FF453A",
 };
 
-const FONT = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif";
+const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace";
 
 const TIME_SIGS = [
@@ -215,15 +215,15 @@ const SEED_SETLISTS = [{
    Shared bits
    ========================================================================= */
 const inputStyle = {
-  width: "100%", height: 44, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10,
-  padding: "0 14px", color: C.text, fontFamily: FONT, fontSize: 16, boxSizing: "border-box",
+  width: "100%", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10,
+  padding: "12px 14px", color: C.text, fontFamily: FONT, fontSize: 16, boxSizing: "border-box",
 };
 const iconBtnStyle = {
   width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent",
   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
 };
 const circleBtnStyle = {
-  width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface2,
+  width: 34, height: 34, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface2,
   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
 };
 function Field({ label, children }) {
@@ -798,6 +798,8 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
     <div
       className="scroll-list"
       style={{
+        position: "fixed", inset: 0, zIndex: 150, background: C.bg, color: C.text, fontFamily: FONT,
+        overflowY: "auto", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top, 0px)",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
       }}
@@ -1348,7 +1350,7 @@ function SetlistSongRow({ song, keyOverride, style, handlers, onClick }) {
     <div
       onClick={onClick}
       {...handlers}
-      style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 28px 14px 20px", borderBottom: `1px solid ${C.border}`, cursor: "pointer", position: "relative", ...style }}
+      style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 28px 12px 20px", borderBottom: `1px solid ${C.border}`, cursor: "pointer", position: "relative", ...style }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{song.title}</div>
@@ -1445,7 +1447,7 @@ function SetlistStageScreen({ setlist, songs, onBack, onUpdateSetlist, onOpenSon
   return (
     <div
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: 58, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 80,
+        position: "fixed", top: 0, left: 0, right: 0, bottom: "calc(47px + max(28px, 10px + env(safe-area-inset-bottom, 0px)))", background: C.bg, color: C.text, fontFamily: FONT, zIndex: 80,
         display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
@@ -1699,11 +1701,11 @@ function BottomNav({ active, onChange }) {
   ];
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30 }}>
-      <div style={{ display: "flex", background: "#000000", paddingTop: 8, paddingBottom: "max(12px, calc(6px + env(safe-area-inset-bottom, 0px)))" }}>
+      <div style={{ display: "flex", background: "#000000", paddingTop: 10, paddingBottom: "max(28px, calc(10px + env(safe-area-inset-bottom, 0px)))" }}>
         {items.map(({ id, label, icon: Icon }) => {
           const isActive = active === id;
           return (
-            <button key={id} onClick={() => onChange(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "0 0 4px", background: "none", border: "none", fontFamily: FONT, cursor: "pointer" }}>
+            <button key={id} onClick={() => onChange(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "0 0 6px", background: "none", border: "none", fontFamily: FONT, cursor: "pointer" }}>
               <Icon size={18} color={isActive ? C.accent : C.textMuted} strokeWidth={isActive ? 2.3 : 1.8} />
               <span style={{ fontSize: 8, color: isActive ? C.accent : C.textMuted, fontWeight: isActive ? 600 : 400 }}>{label}</span>
             </button>
@@ -1892,7 +1894,7 @@ export default function App() {
         .bpm-number-input::-webkit-outer-spin-button, .bpm-number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .bpm-number-input { -moz-appearance: textfield; }
         button { -webkit-tap-highlight-color: transparent; transition: transform 90ms ease, opacity 90ms ease; -webkit-touch-callout: none; }
-        button:active { transform: scale(0.96); opacity: 0.85; }
+        button:active { transform: scale(0.94); opacity: 0.8; }
         input:focus, textarea:focus { outline: none; border-color: ${C.accent}; box-shadow: 0 0 0 2px ${C.accentDim}; }
         input::placeholder, textarea::placeholder { color: ${C.textFaint}; opacity: 1; }
         * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -1902,7 +1904,7 @@ export default function App() {
         * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
 
-      <div style={{ paddingBottom: 58, height: "100%", overflow: "hidden", boxSizing: "border-box" }}>
+      <div style={{ paddingBottom: "calc(47px + max(28px, 10px + env(safe-area-inset-bottom, 0px)))", height: "100%", overflow: "hidden", boxSizing: "border-box" }}>
         {tab === "piano" && <PianoScreen />}
         {tab === "songs" && (
           <SongsScreen songs={songs} onOpen={(s) => setViewing({ songId: s.id, fromSetlistId: null })} onAdd={() => setEditingSong(null)} onEdit={(s) => setEditingSong(s)} />
