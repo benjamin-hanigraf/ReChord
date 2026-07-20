@@ -20,6 +20,6 @@ The PWA plugin generates `dist/sw.js` and precaches the application shell and st
 
 ## Storage behavior
 
-- `songs` and `setlists`: IndexedDB database `setlist-click`, object store `appState`
-- Reader settings: localStorage keys beginning with `setlist-click:`
+- `songs` and `setlists`: IndexedDB database `Chords`, object store `appState`
+- Reader settings: localStorage keys beginning with `Chords:`
 - A first launch starts with the included example songs and setlist; later changes persist locally.

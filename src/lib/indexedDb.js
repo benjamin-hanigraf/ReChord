@@ -1,4 +1,4 @@
-const DB_NAME = "setlist-click";
+const DB_NAME = "Chords";
 const DB_VERSION = 1;
 const STORE_NAME = "appState";
 

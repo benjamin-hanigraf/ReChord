@@ -1716,9 +1716,9 @@ function BottomNav({ active, onChange }) {
 export default function App() {
   const [songs, setSongs] = useIndexedDbState("songs", SEED_SONGS);
   const [setlists, setSetlists] = useIndexedDbState("setlists", SEED_SETLISTS);
-  const [fontSize, setFontSize] = useLocalStorageState("setlist-click:font-size", 22);
-  const [textAlign, setTextAlign] = useLocalStorageState("setlist-click:text-align", "left");
-  const [bold, setBold] = useLocalStorageState("setlist-click:bold", false);
+  const [fontSize, setFontSize] = useLocalStorageState("Chords:font-size", 22);
+  const [textAlign, setTextAlign] = useLocalStorageState("Chords:text-align", "left");
+  const [bold, setBold] = useLocalStorageState("Chords:bold", false);
 
   const [tab, setTab] = useState("songs"); // default page is Songs
   const [editingSong, setEditingSong] = useState(undefined); // undefined = closed, null = new, obj = edit
