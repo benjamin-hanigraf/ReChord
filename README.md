@@ -1,4 +1,4 @@
-# Setlist Click
+# Chords
 
 An installable, backend-free React PWA. Songs and setlists are stored locally in IndexedDB; reader preferences are stored in localStorage. No application data leaves the device.
 

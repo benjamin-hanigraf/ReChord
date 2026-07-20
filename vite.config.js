@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       manifest: false,
-      includeAssets: ["icons/*.svg"],
+      includeAssets: ["icons/*.{svg,png}"],
       workbox: {
         navigateFallback: "/index.html",
         globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
