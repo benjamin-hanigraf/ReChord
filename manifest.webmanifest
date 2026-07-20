@@ -1,7 +1,7 @@
 {
   "name": "Chords",
   "short_name": "Chords",
-  "description": "An offline setlist and chord-chart manager.",
+  "description": "Chord Chart and Setlist Manager.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

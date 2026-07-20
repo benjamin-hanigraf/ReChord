@@ -25,7 +25,7 @@ const C = {
   danger: "#FF453A",
 };
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
+const FONT = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace";
 
 const TIME_SIGS = [
@@ -185,7 +185,7 @@ function dedupeTitle(candidateTitle, artist, existingSongs) {
 const SEED_SONGS = [
   {
     id: "seed-1", title: "Oceans", artist: "Hillsong United", tempo: 72, timeSignature: "4/4", key: "D", keyQuality: "Major",
-    description: "Sarah's key: D \u00b7 Mike's key: C\nKeyboard style: ambient pad, swell into bridge",
+    description: "Benny's key: D | Sherly's key: G\nStyle: Rock Shuffle",
     sections: [
       { id: uid(), label: "Verse", numbers: "1        4\n6m       4" },
       { id: uid(), label: "Chorus", numbers: "1  5  6m  4\n1  5  4" },
@@ -194,7 +194,7 @@ const SEED_SONGS = [
   },
   {
     id: "seed-2", title: "Way Maker", artist: "Sinach", tempo: 68, timeSignature: "4/4", key: "E", keyQuality: "Major",
-    description: "Beat: gospel shuffle, 6/8 feel",
+    description: "Benny's key: D | Sherly's key: G\nStyle: Rock Shuffle",
     sections: [
       { id: uid(), label: "Intro", numbers: "1  .  .  .  |  4  .  .  .  |  5  .  .  .  |  1  .  .  ." },
       { id: uid(), label: "Chorus", numbers: "1     4\n6m    5\n1     4  5  1" },
@@ -202,7 +202,7 @@ const SEED_SONGS = [
   },
   {
     id: "seed-3", title: "Our God", artist: "Chris Tomlin", tempo: 105, timeSignature: "4/4", key: "A", keyQuality: "Major",
-    description: "",
+    description: "Benny's key: D | Sherly's key: G\nStyle: Rock Shuffle",
     sections: [{ id: uid(), label: "Verse", numbers: "1  5  6m  4" }, { id: uid(), label: "Chorus", numbers: "4  1  5  6m\n4  1  5" }],
   },
 ];
@@ -215,7 +215,7 @@ const SEED_SETLISTS = [{
    Shared bits
    ========================================================================= */
 const inputStyle = {
-  width: "100%", height: 58, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10,
+  width: "100%", height: 44, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10,
   padding: "0 14px", color: C.text, fontFamily: FONT, fontSize: 16, boxSizing: "border-box",
 };
 const iconBtnStyle = {
@@ -285,12 +285,12 @@ function TimeSigPicker({ value, onChange, fullWidth }) {
         onClick={handleToggle}
         style={{
           fontFamily: FONT, fontSize: 16, fontWeight: 600, borderRadius: 10, boxSizing: "border-box",
-          border: `1px solid ${C.border}`, background: C.surface2, color: C.text,
-          width: fullWidth ? "100%" : undefined, textAlign: "center", height: 58, padding: "0 10px",
+          border: `1px solid ${C.border}`, background: C.surface2, color: value ? C.text : C.textFaint,
+          width: fullWidth ? "100%" : undefined, textAlign: "center", height: 44, padding: "0 10px",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
-        {value.beats}/{value.unit}
+        {value ? `${value.beats}/${value.unit}` : "—"}
       </button>
       {open && (
         <>
@@ -302,7 +302,7 @@ function TimeSigPicker({ value, onChange, fullWidth }) {
             overflow: "hidden", boxShadow: "0 12px 32px rgba(0,0,0,0.6)",
           }}>
             {TIME_SIGS.map((ts) => {
-              const active = ts.beats === value.beats && ts.unit === value.unit;
+              const active = value && ts.beats === value.beats && ts.unit === value.unit;
               return (
                 <div key={`${ts.beats}/${ts.unit}`} onClick={() => { onChange(ts); setOpen(false); }} style={{
                   padding: "10px 16px", fontFamily: FONT, fontSize: 15, fontWeight: 500, textAlign: "center",
@@ -326,7 +326,7 @@ function NaturalDropdown({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const btnRef = useRef(null);
-  const DROPDOWN_HEIGHT = 260;
+  const DROPDOWN_HEIGHT = 296; // 7 rows, no internal scroll — must show in full
 
   const handleToggle = () => {
     if (!open && btnRef.current) {
@@ -344,7 +344,7 @@ function NaturalDropdown({ value, onChange }) {
         type="button"
         onClick={handleToggle}
         style={{
-          width: "100%", boxSizing: "border-box", height: 58, padding: "0 10px", borderRadius: 10,
+          width: "100%", boxSizing: "border-box", height: 44, padding: "0 10px", borderRadius: 10,
           border: `1px solid ${C.border}`, background: C.surface2, color: C.text,
           fontFamily: FONT, fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center",
         }}
@@ -356,7 +356,7 @@ function NaturalDropdown({ value, onChange }) {
           <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 140 }} />
           <div style={{
             position: "absolute", ...(openUpward ? { bottom: "110%" } : { top: "110%" }),
-            left: 0, right: 0, zIndex: 150, maxHeight: DROPDOWN_HEIGHT, overflowY: "auto",
+            left: 0, right: 0, zIndex: 150,
             background: C.surface3, border: `1px solid ${C.borderStrong}`, borderRadius: 12,
             boxShadow: "0 12px 32px rgba(0,0,0,0.6)",
           }}>
@@ -392,7 +392,7 @@ function AccidentalButton({ variant, natural, value, onChange }) {
       disabled={disabled}
       onClick={() => onChange(active ? "natural" : variant)}
       style={{
-        width: "100%", height: 58, borderRadius: 10, fontFamily: FONT, fontSize: 17, fontWeight: 700,
+        width: "100%", height: 44, borderRadius: 10, fontFamily: FONT, fontSize: 17, fontWeight: 700,
         border: `1px solid ${active ? C.accent : C.border}`,
         background: active ? C.accentSoft : C.surface2,
         color: disabled ? C.textFaint : active ? C.accent : C.textMuted,
@@ -408,18 +408,22 @@ function AccidentalButton({ variant, natural, value, onChange }) {
 // stays neutral; the active side's label turns blue to show selection.
 function ToggleSwitch({ checked, onChange, offLabel, onLabel }) {
   return (
-    <button
-      type="button"
+    <div
+      role="switch"
+      aria-checked={checked}
+      tabIndex={0}
       onClick={() => onChange(!checked)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(!checked); } }}
       style={{
-        width: "100%", height: 58, boxSizing: "border-box", borderRadius: 10, border: `1px solid ${C.border}`,
+        width: "100%", height: 44, boxSizing: "border-box", borderRadius: 10, border: `1px solid ${C.border}`,
         background: C.surface2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px",
+        cursor: "pointer",
       }}
     >
       <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: checked ? C.textFaint : C.accent }}>{offLabel}</span>
       <span style={{
         position: "relative", width: 46, height: 26, borderRadius: 13, flexShrink: 0, margin: "0 10px",
-        background: C.surface3, border: `1px solid ${C.borderStrong}`,
+        background: C.surface3, border: `1px solid ${C.borderStrong}`, boxSizing: "border-box",
       }}>
         <span style={{
           position: "absolute", top: 2, left: checked ? 22 : 2, width: 20, height: 20, borderRadius: "50%",
@@ -427,7 +431,7 @@ function ToggleSwitch({ checked, onChange, offLabel, onLabel }) {
         }} />
       </span>
       <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: checked ? C.accent : C.textFaint }}>{onLabel}</span>
-    </button>
+    </div>
   );
 }
 
@@ -437,8 +441,8 @@ function ToggleSwitch({ checked, onChange, offLabel, onLabel }) {
 function PianoIcon({ size = 20, color }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="5" width="18" height="14" rx="1.5" stroke={color} strokeWidth="1.8" />
-      <path d="M7 5v9M11 5v9M14 5v9M17.5 5v9" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="4" y="6" width="16" height="12" rx="2" stroke={color} strokeWidth="1.5" />
+      <path d="M9.5 6v7M14.5 6v7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -750,8 +754,8 @@ function useEdgeSwipeBack(onBack) {
 function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [artist, setArtist] = useState(initial?.artist ?? "");
-  const [tempo, setTempo] = useState(initial?.tempo ?? 120);
-  const [timeSig, setTimeSig] = useState(() => parseTimeSig(initial?.timeSignature ?? "4/4"));
+  const [tempo, setTempo] = useState(initial?.tempo ?? "");
+  const [timeSig, setTimeSig] = useState(() => (initial?.timeSignature ? parseTimeSig(initial.timeSignature) : null));
   const initialDecomposed = decomposeKey(initial?.key ?? "C");
   const [keyNatural, setKeyNatural] = useState(initialDecomposed.natural);
   const [keyAccidental, setKeyAccidental] = useState(initialDecomposed.accidental);
@@ -783,7 +787,7 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
     if (!cleanTitle) return;
     if (isDuplicate) { setError("Song already exists"); return; }
     onSave({
-      title: cleanTitle, artist: cleanArtist, tempo, timeSignature: formatTimeSig(timeSig),
+      title: cleanTitle, artist: cleanArtist, tempo: tempo === "" ? "" : Number(tempo), timeSignature: timeSig ? formatTimeSig(timeSig) : "",
       key: composeKey(keyNatural, keyAccidental), keyQuality, description,
       sections: sections.length ? sections : [{ id: uid(), label: "Verse", numbers: "" }],
     });
@@ -792,9 +796,8 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
 
   return (
     <div
+      className="scroll-list"
       style={{
-        position: "fixed", inset: 0, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 100, overflowY: "auto",
-        paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
       }}
@@ -823,7 +826,8 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <Field label="TEMPO">
               <input type="number" inputMode="numeric" value={tempo} onChange={(e) => setTempo(e.target.value)} className="bpm-number-input"
-                style={{ ...inputStyle, fontSize: 18, fontVariantNumeric: "tabular-nums", textAlign: "center", height: 58, boxSizing: "border-box" }} />
+                placeholder="—"
+                style={{ ...inputStyle, fontSize: 18, fontVariantNumeric: "tabular-nums", textAlign: "center", height: 44, boxSizing: "border-box" }} />
             </Field>
           </div>
         </div>
@@ -859,8 +863,8 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
         <Field label="DESCRIPTION">
           <textarea
             value={description} onChange={(e) => setDescription(e.target.value)}
-            placeholder={"e.g. Sarah's key is A, Mike's key is G\nKeyboard style: gospel shuffle, 6/8 feel"}
-            style={{ ...inputStyle, height: "auto", padding: "12px 14px", minHeight: 70, resize: "vertical" }}
+            placeholder={"Benny's key: D | Sherly's key: G\nStyle: Rock Shuffle"}
+            style={{ ...inputStyle, height: "auto", padding: "12px 14px", minHeight: 62, resize: "vertical" }}
           />
         </Field>
 
@@ -969,7 +973,7 @@ function SongsScreen({ songs, onOpen, onAdd, onEdit }) {
           />
         </div>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 14px", boxSizing: "border-box" }}>
+      <div className="scroll-list" style={{ flex: 1, overflowY: "auto", padding: "0 20px 14px", boxSizing: "border-box" }}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px", color: C.textFaint, fontSize: 14 }}>
             {songs.length === 0 ? "No songs yet." : "No matches."}
@@ -1012,7 +1016,7 @@ function SongPickerScreen({ songs, selectedIds, onToggle, onClose, setlistName, 
           style={{ ...inputStyle, paddingLeft: 36, paddingRight: query ? 36 : 14 }}
         />
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "6px 20px 40px" }}>
+      <div className="scroll-list" style={{ flex: 1, overflowY: "auto", padding: "6px 20px 40px" }}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px", color: C.textFaint, fontSize: 14 }}>{songs.length === 0 ? "No songs in your library yet." : "No matches."}</div>
         ) : filtered.map((s) => {
@@ -1073,7 +1077,7 @@ function SongExportPicker({ songs, onClose, onExport }) {
           style={{ ...inputStyle, paddingLeft: 36, paddingRight: query ? 36 : 14 }}
         />
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "6px 20px 110px" }}>
+      <div className="scroll-list" style={{ flex: 1, overflowY: "auto", padding: "6px 20px 110px" }}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px", color: C.textFaint, fontSize: 14 }}>No matches.</div>
         ) : filtered.map((s) => {
@@ -1111,7 +1115,7 @@ function Modal({ title, onClose, children }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", width: "100%", background: C.surface2, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32, fontFamily: FONT, color: C.text, maxHeight: "80vh", overflowY: "auto" }}>
+      <div className="scroll-list" style={{ position: "relative", width: "100%", background: C.surface2, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32, fontFamily: FONT, color: C.text, maxHeight: "80vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{title}</div>
           <button onClick={onClose} style={iconBtnStyle}><X size={18} color={C.textMuted} /></button>
@@ -1298,8 +1302,8 @@ function SongDetailScreen({ song, contextKey, onKeyChange, onBack, onEdit, onDel
       </div>
 
       <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderBottom: `1px solid ${C.border}` }}>
-        <span style={badgeStyle}>{song.timeSignature}</span>
-        <span style={badgeStyle}>{song.tempo} BPM</span>
+        {song.timeSignature && <span style={badgeStyle}>{song.timeSignature}</span>}
+        {song.tempo !== "" && song.tempo != null && <span style={badgeStyle}>{song.tempo} BPM</span>}
         <div style={{ flex: 1 }} />
         <button onClick={() => stepKey(-1)} style={chevronBtn}><ChevronLeft size={16} /></button>
         <button onClick={() => setMode((m) => (m === "numbers" ? "chords" : "numbers"))} style={keyButtonStyle}>
@@ -1313,7 +1317,7 @@ function SongDetailScreen({ song, contextKey, onKeyChange, onBack, onEdit, onDel
         )}
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 40px" }}>
+      <div className="scroll-list" style={{ flex: 1, overflowY: "auto", padding: "16px 20px 40px" }}>
         {descOpen && song.description && (
           <div style={{ marginBottom: 18, padding: "11px 13px", background: C.surface2, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.accent}`, borderRadius: 8, fontSize: 13.5, color: C.textMuted, whiteSpace: "pre-wrap" }}>
             {song.description}
@@ -1441,7 +1445,7 @@ function SetlistStageScreen({ setlist, songs, onBack, onUpdateSetlist, onOpenSon
   return (
     <div
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: 84, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 80,
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 58, background: C.bg, color: C.text, fontFamily: FONT, zIndex: 80,
         display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
@@ -1471,7 +1475,7 @@ function SetlistStageScreen({ setlist, songs, onBack, onUpdateSetlist, onOpenSon
         />
       </div>
 
-      <div style={{ flex: 1, overflowY: activeDragIndex !== null ? "hidden" : "auto", padding: "8px 0 12px", touchAction: activeDragIndex !== null ? "none" : "pan-y" }}>
+      <div className="scroll-list" style={{ flex: 1, overflowY: activeDragIndex !== null ? "hidden" : "auto", padding: "8px 0 12px", touchAction: activeDragIndex !== null ? "none" : "pan-y" }}>
         {setlistSongs.length === 0 ? (
           <div style={{ textAlign: "center", padding: "36px 20px", color: C.textFaint, fontSize: 13 }}>No songs added yet.</div>
         ) : setlistSongs.map(({ song: s, keyOverride }, idx) => {
@@ -1540,7 +1544,7 @@ function SetlistsScreen({ setlists, onOpenStage, onCreate, onDelete, creating, s
           />
         </div>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 14px", boxSizing: "border-box" }}>
+      <div className="scroll-list" style={{ flex: 1, overflowY: "auto", padding: "0 20px 14px", boxSizing: "border-box" }}>
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: "48px 20px", color: C.textFaint, fontSize: 14 }}>{setlists.length === 0 ? "No setlists yet." : "No matches."}</div>
         )}
@@ -1593,7 +1597,7 @@ function SettingsScreen({ fontSize, setFontSize, textAlign, setTextAlign, bold, 
       <div style={{ flex: "0 0 auto", padding: "22px 20px 14px", boxSizing: "border-box" }}>
         <div style={{ fontSize: 26, fontWeight: 700 }}>Settings</div>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 40px", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div className="scroll-list" style={{ flex: 1, overflowY: "auto", padding: "0 20px 40px", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <SectionLabel>DISPLAY</SectionLabel>
         <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, marginBottom: 26, display: "flex", flexDirection: "column", gap: 18 }}>
           <Field label="TEXT SIZE">
@@ -1695,11 +1699,11 @@ function BottomNav({ active, onChange }) {
   ];
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30 }}>
-      <div style={{ display: "flex", background: "#000000", paddingTop: 10, paddingBottom: "max(28px, calc(10px + env(safe-area-inset-bottom, 0px)))" }}>
+      <div style={{ display: "flex", background: "#000000", paddingTop: 8, paddingBottom: "max(12px, calc(6px + env(safe-area-inset-bottom, 0px)))" }}>
         {items.map(({ id, label, icon: Icon }) => {
           const isActive = active === id;
           return (
-            <button key={id} onClick={() => onChange(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "0 0 6px", background: "none", border: "none", fontFamily: FONT, cursor: "pointer" }}>
+            <button key={id} onClick={() => onChange(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "0 0 4px", background: "none", border: "none", fontFamily: FONT, cursor: "pointer" }}>
               <Icon size={18} color={isActive ? C.accent : C.textMuted} strokeWidth={isActive ? 2.3 : 1.8} />
               <span style={{ fontSize: 8, color: isActive ? C.accent : C.textMuted, fontWeight: isActive ? 600 : 400 }}>{label}</span>
             </button>
@@ -1716,9 +1720,9 @@ function BottomNav({ active, onChange }) {
 export default function App() {
   const [songs, setSongs] = useIndexedDbState("songs", SEED_SONGS);
   const [setlists, setSetlists] = useIndexedDbState("setlists", SEED_SETLISTS);
-  const [fontSize, setFontSize] = useLocalStorageState("Chords:font-size", 22);
-  const [textAlign, setTextAlign] = useLocalStorageState("Chords:text-align", "left");
-  const [bold, setBold] = useLocalStorageState("Chords:bold", false);
+  const [fontSize, setFontSize] = useLocalStorageState("setlist-click:font-size", 22);
+  const [textAlign, setTextAlign] = useLocalStorageState("setlist-click:text-align", "left");
+  const [bold, setBold] = useLocalStorageState("setlist-click:bold", false);
 
   const [tab, setTab] = useState("songs"); // default page is Songs
   const [editingSong, setEditingSong] = useState(undefined); // undefined = closed, null = new, obj = edit
@@ -1891,13 +1895,14 @@ export default function App() {
         button:active { transform: scale(0.96); opacity: 0.85; }
         input:focus, textarea:focus { outline: none; border-color: ${C.accent}; box-shadow: 0 0 0 2px ${C.accentDim}; }
         input::placeholder, textarea::placeholder { color: ${C.textFaint}; opacity: 1; }
-        * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; }
+        * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         input, textarea { -webkit-user-select: text; user-select: text; }
+        .scroll-list { -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
         *::-webkit-scrollbar { display: none; }
         * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
 
-      <div style={{ paddingBottom: 84, height: "100%", overflow: "hidden", boxSizing: "border-box" }}>
+      <div style={{ paddingBottom: 58, height: "100%", overflow: "hidden", boxSizing: "border-box" }}>
         {tab === "piano" && <PianoScreen />}
         {tab === "songs" && (
           <SongsScreen songs={songs} onOpen={(s) => setViewing({ songId: s.id, fromSetlistId: null })} onAdd={() => setEditingSong(null)} onEdit={(s) => setEditingSong(s)} />
