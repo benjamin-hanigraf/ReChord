@@ -852,32 +852,41 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
 
   const { dragX, leaving, handlers } = useEdgeSwipeBack(onCancel);
 
+  // Applies parsed clipboard text to the form. Every field the clipboard
+  // text actually contains fully overwrites whatever is currently in the
+  // form (sections are replaced wholesale, not appended to); fields absent
+  // from the clipboard text are simply left as-is.
+  const applyClipboardText = (text) => {
+    if (!text || !text.trim()) return false;
+    const { fields, sections: parsedSections } = parseSongClipboardText(text);
+    if (fields.title !== undefined) setTitle(fields.title);
+    if (fields.artist !== undefined) setArtist(fields.artist);
+    if (fields.tempo !== undefined) {
+      const digits = fields.tempo.replace(/[^\d]/g, "");
+      if (digits) setTempo(digits);
+    }
+    if (fields.timeSignature !== undefined) {
+      const m = fields.timeSignature.match(/^(\d+)\s*\/\s*(\d+)$/);
+      if (m) setTimeSig({ beats: parseInt(m[1], 10), unit: parseInt(m[2], 10) });
+    }
+    if (fields.key !== undefined) {
+      const parsedKey = parseKeyPaste(fields.key);
+      if (parsedKey) {
+        setKeyNatural(parsedKey.natural);
+        setKeyAccidental(parsedKey.accidental);
+        setKeyQuality(parsedKey.quality);
+      }
+    }
+    if (fields.description !== undefined) setDescription(fields.description);
+    if (parsedSections.length) setSections(parsedSections); // full replace, never appended
+    setError("");
+    return true;
+  };
+
   const handlePasteFromClipboard = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      if (!text || !text.trim()) return;
-      const { fields, sections: parsedSections } = parseSongClipboardText(text);
-      if (fields.title !== undefined) setTitle(fields.title);
-      if (fields.artist !== undefined) setArtist(fields.artist);
-      if (fields.tempo !== undefined) {
-        const digits = fields.tempo.replace(/[^\d]/g, "");
-        if (digits) setTempo(digits);
-      }
-      if (fields.timeSignature !== undefined) {
-        const m = fields.timeSignature.match(/^(\d+)\s*\/\s*(\d+)$/);
-        if (m) setTimeSig({ beats: parseInt(m[1], 10), unit: parseInt(m[2], 10) });
-      }
-      if (fields.key !== undefined) {
-        const parsedKey = parseKeyPaste(fields.key);
-        if (parsedKey) {
-          setKeyNatural(parsedKey.natural);
-          setKeyAccidental(parsedKey.accidental);
-          setKeyQuality(parsedKey.quality);
-        }
-      }
-      if (fields.description !== undefined) setDescription(fields.description);
-      if (parsedSections.length) setSections(parsedSections);
-      setError("");
+      if (!applyClipboardText(text)) setError("Clipboard is empty");
     } catch (err) {
       setError("Couldn't read clipboard");
     }
