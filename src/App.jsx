@@ -582,6 +582,26 @@ const BLACK_KEYS = [
   { name: "A#", semitone: 10, afterWhiteIndex: 5 },
 ];
 
+// True when the viewport itself is wider than it is tall — a real desktop
+// browser window, or an iPad/tablet turned to landscape. Used to (a) let
+// the app fill the actual screen width instead of the normal phone-width
+// column, and (b) let the Piano render upright instead of using the
+// rotate-90 trick that exists specifically for a *portrait* phone screen.
+function useIsLandscapeScreen() {
+  const getIsLandscape = () => typeof window !== "undefined" && window.innerWidth > window.innerHeight;
+  const [isLandscape, setIsLandscape] = useState(getIsLandscape);
+  useEffect(() => {
+    const update = () => setIsLandscape(getIsLandscape());
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
+  return isLandscape;
+}
+
 // Measures its portrait slot and rotates a swapped-dimension inner box
 // 90deg clockwise into it, so the piano is always landscape no matter the
 // device orientation or this tab's own portrait shape.
@@ -801,6 +821,57 @@ function PianoScreen() {
     };
   }, []);
 
+  const isLandscapeScreen = useIsLandscapeScreen();
+
+  const pianoBody = (
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", fontFamily: FONT, color: C.text }}>
+      <div style={{ height: 60, flexShrink: 0, display: "flex", alignItems: "center", padding: "0 20px", borderBottom: `1px solid ${C.border}`, gap: 10, boxSizing: "border-box" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, flex: 1 }}>Piano</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={() => setOctaveStart(octaveStart - 1)} disabled={octaveStart <= 3} style={{
+            width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.borderStrong}`, background: C.surface2,
+            color: C.text, display: "flex", alignItems: "center", justifyContent: "center", opacity: octaveStart <= 3 ? 0.35 : 1,
+          }}>
+            <ChevronLeft size={15} />
+          </button>
+          <div style={{ fontSize: 13.5, fontWeight: 700, minWidth: 30, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>C{octaveStart}</div>
+          <button onClick={() => setOctaveStart(octaveStart + 1)} disabled={octaveStart >= 5} style={{
+            width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.borderStrong}`, background: C.surface2,
+            color: C.text, display: "flex", alignItems: "center", justifyContent: "center", opacity: octaveStart >= 5 ? 0.35 : 1,
+          }}>
+            <ChevronRight size={15} />
+          </button>
+        </div>
+      </div>
+
+      <div ref={containerRef} onPointerDown={handlePointerDown} style={{ flex: 1, position: "relative", touchAction: "none" }}>
+        <div style={{ position: "absolute", inset: 0, display: "flex" }}>
+          {WHITE_KEYS.map((k) => (
+            <div key={k.semitone} data-semitone={k.semitone} data-black="0" style={{
+              flex: 1, background: WHITE_KEY_BG, borderRight: "1px solid rgba(0,0,0,0.25)",
+              display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10, boxSizing: "border-box",
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(0,0,0,0.35)" }}>{k.name}{octaveStart}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          {BLACK_KEYS.map((k) => {
+            const boundaryPct = ((k.afterWhiteIndex + 1) / 7) * 100;
+            const widthPct = (0.62 / 7) * 100;
+            const leftPct = boundaryPct - widthPct / 2;
+            return (
+              <div key={k.semitone} data-semitone={k.semitone} data-black="1" style={{
+                position: "absolute", top: 0, height: "58%", left: `${leftPct}%`, width: `${widthPct}%`,
+                background: BLACK_KEY_BG, borderRadius: "0 0 4px 4px", pointerEvents: "auto", boxShadow: "0 3px 6px rgba(0,0,0,0.5)",
+              }} />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ height: "100%" }}>
       <video
@@ -812,54 +883,7 @@ function PianoScreen() {
         volume={0.01}
         style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
       />
-      <LandscapeLock>
-        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", fontFamily: FONT, color: C.text }}>
-          <div style={{ height: 60, flexShrink: 0, display: "flex", alignItems: "center", padding: "0 20px", borderBottom: `1px solid ${C.border}`, gap: 10, boxSizing: "border-box" }}>
-            <div style={{ fontSize: 15, fontWeight: 600, flex: 1 }}>Piano</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button onClick={() => setOctaveStart(octaveStart - 1)} disabled={octaveStart <= 3} style={{
-                width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.borderStrong}`, background: C.surface2,
-                color: C.text, display: "flex", alignItems: "center", justifyContent: "center", opacity: octaveStart <= 3 ? 0.35 : 1,
-              }}>
-                <ChevronLeft size={15} />
-              </button>
-              <div style={{ fontSize: 13.5, fontWeight: 700, minWidth: 30, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>C{octaveStart}</div>
-              <button onClick={() => setOctaveStart(octaveStart + 1)} disabled={octaveStart >= 5} style={{
-                width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.borderStrong}`, background: C.surface2,
-                color: C.text, display: "flex", alignItems: "center", justifyContent: "center", opacity: octaveStart >= 5 ? 0.35 : 1,
-              }}>
-                <ChevronRight size={15} />
-              </button>
-            </div>
-          </div>
-
-          <div ref={containerRef} onPointerDown={handlePointerDown} style={{ flex: 1, position: "relative", touchAction: "none" }}>
-            <div style={{ position: "absolute", inset: 0, display: "flex" }}>
-              {WHITE_KEYS.map((k) => (
-                <div key={k.semitone} data-semitone={k.semitone} data-black="0" style={{
-                  flex: 1, background: WHITE_KEY_BG, borderRight: "1px solid rgba(0,0,0,0.25)",
-                  display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10, boxSizing: "border-box",
-                }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(0,0,0,0.35)" }}>{k.name}{octaveStart}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-              {BLACK_KEYS.map((k) => {
-                const boundaryPct = ((k.afterWhiteIndex + 1) / 7) * 100;
-                const widthPct = (0.62 / 7) * 100;
-                const leftPct = boundaryPct - widthPct / 2;
-                return (
-                  <div key={k.semitone} data-semitone={k.semitone} data-black="1" style={{
-                    position: "absolute", top: 0, height: "58%", left: `${leftPct}%`, width: `${widthPct}%`,
-                    background: BLACK_KEY_BG, borderRadius: "0 0 4px 4px", pointerEvents: "auto", boxShadow: "0 3px 6px rgba(0,0,0,0.5)",
-                  }} />
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </LandscapeLock>
+      {isLandscapeScreen ? pianoBody : <LandscapeLock>{pianoBody}</LandscapeLock>}
     </div>
   );
 }
@@ -894,6 +918,53 @@ function useEdgeSwipeBack(onBack) {
 
   return {
     dragX, leaving,
+    handlers: { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd, onTouchCancel: handleTouchEnd },
+  };
+}
+
+/* =========================================================================
+   Setlist song-nav swipe hook — swipe anywhere (not just the edge) left<->
+   right to move to the previous/next song in the setlist. Direction-locks
+   after ~8px of movement: if the gesture turns out to be more vertical than
+   horizontal, it's treated as a scroll and nav is skipped for the rest of
+   that touch, so scrolling through lyrics never accidentally flips songs.
+   ========================================================================= */
+function useSetlistSongSwipe(onPrev, onNext) {
+  const [dragX, setDragX] = useState(0);
+  const draggingRef = useRef(false);
+  const startRef = useRef({ x: 0, y: 0 });
+  const directionRef = useRef(null); // null | "x" | "y"
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    directionRef.current = null;
+    draggingRef.current = true;
+  };
+  const handleTouchMove = (e) => {
+    if (!draggingRef.current) return;
+    const dx = e.touches[0].clientX - startRef.current.x;
+    const dy = e.touches[0].clientY - startRef.current.y;
+    if (directionRef.current === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      directionRef.current = Math.abs(dy) > Math.abs(dx) ? "y" : "x";
+    }
+    if (directionRef.current === "y") return; // already scrolling — leave nav alone
+    setDragX(dx);
+  };
+  const handleTouchEnd = () => {
+    const wasHorizontal = directionRef.current === "x";
+    draggingRef.current = false;
+    directionRef.current = null;
+    if (wasHorizontal) {
+      if (dragX > 70 && onPrev) onPrev();
+      else if (dragX < -70 && onNext) onNext();
+    }
+    setDragX(0);
+  };
+
+  return {
+    dragX,
     handlers: { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd, onTouchCancel: handleTouchEnd },
   };
 }
@@ -1445,14 +1516,22 @@ function KebabMenu({ onEdit, onShare, onDelete, isInSetlist, onRemoveFromSetlist
      setlist, changes are written to that setlist entry instead and persist
      there until the song is removed from the setlist.
    ========================================================================= */
-function SongDetailScreen({ song, contextKey, onKeyChange, onBack, onEdit, onDelete, onShare, fontSize, textAlign, bold, isInSetlist, onRemoveFromSetlist }) {
+function SongDetailScreen({ song, contextKey, onKeyChange, onBack, onEdit, onDelete, onShare, fontSize, textAlign, bold, isInSetlist, onRemoveFromSetlist, onPrevSong, onNextSong }) {
   const [viewKey, setViewKey] = useState(contextKey ?? song.key);
   const [mode, setMode] = useState("numbers");
   const [descOpen, setDescOpen] = useState(false);
 
   useEffect(() => { setViewKey(contextKey ?? song.key); }, [song.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { dragX, leaving, handlers } = useEdgeSwipeBack(onBack);
+  // Inside a setlist, the back arrow button already covers "leave this
+  // song" — edge-swipe-back is disabled there so it doesn't compete with
+  // swiping to the previous/next song in the setlist instead. Outside a
+  // setlist there's no prev/next to go to, so edge-swipe-back is kept.
+  const edgeBack = useEdgeSwipeBack(onBack);
+  const setlistSwipe = useSetlistSongSwipe(onPrevSong, onNextSong);
+  const { dragX, leaving, handlers } = isInSetlist
+    ? { dragX: setlistSwipe.dragX, leaving: false, handlers: setlistSwipe.handlers }
+    : edgeBack;
 
   const stepKey = (delta) => {
     const next = transposeKey(viewKey, delta);
@@ -1479,6 +1558,7 @@ function SongDetailScreen({ song, contextKey, onKeyChange, onBack, onEdit, onDel
         display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box",
         transform: `translateX(${dragX}px)`,
         transition: leaving ? "transform 200ms ease-out" : dragX === 0 ? "transform 200ms ease" : "none",
+        touchAction: "pan-y",
       }}
       {...handlers}
     >
@@ -1930,6 +2010,10 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState("");
 
   const rootRef = useRef(null);
+  // On a real desktop browser window or an iPad turned to landscape, fill
+  // the actual screen instead of staying capped at the phone-width column.
+  // Portrait screens (phone or iPad) are left exactly as before.
+  const isLandscapeScreen = useIsLandscapeScreen();
 
   // Disable pinch-zoom gestures (Safari gesture events + generic multi-touch).
   useEffect(() => {
@@ -1952,6 +2036,11 @@ export default function App() {
   const viewingSong = viewing ? songs.find((s) => s.id === viewing.songId) : null;
   const viewingSetlist = viewing?.fromSetlistId ? setlists.find((sl) => sl.id === viewing.fromSetlistId) : null;
   const viewingEntry = viewingSetlist ? viewingSetlist.entries.find((e) => e.songId === viewing.songId) : null;
+  const viewingSetlistIndex = viewingSetlist ? viewingSetlist.entries.findIndex((e) => e.songId === viewing.songId) : -1;
+  const prevSetlistSongId = viewingSetlist && viewingSetlistIndex > 0 ? viewingSetlist.entries[viewingSetlistIndex - 1].songId : null;
+  const nextSetlistSongId = viewingSetlist && viewingSetlistIndex >= 0 && viewingSetlistIndex < viewingSetlist.entries.length - 1
+    ? viewingSetlist.entries[viewingSetlistIndex + 1].songId
+    : null;
 
   const handleTabChange = (next) => { setTab(next); setStageIndex(null); setViewing(null); };
 
@@ -2077,7 +2166,7 @@ export default function App() {
     <div
       ref={rootRef}
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: 0, height: "100dvh", width: "100%", maxWidth: 390,
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0, height: "100dvh", width: "100%", maxWidth: isLandscapeScreen ? "none" : 390,
         margin: "0 auto", background: C.bg, color: C.text, fontFamily: FONT, overflow: "hidden",
         border: "none", boxSizing: "border-box", touchAction: "pan-x pan-y",
         paddingTop: "env(safe-area-inset-top, 0px)",
@@ -2142,6 +2231,8 @@ export default function App() {
           onShare={exportSingleSong}
           isInSetlist={!!viewing?.fromSetlistId}
           onRemoveFromSetlist={viewing?.fromSetlistId ? () => handleRemoveSongFromSetlist(viewing.fromSetlistId, viewingSong.id) : null}
+          onPrevSong={viewing?.fromSetlistId && prevSetlistSongId ? () => setViewing({ songId: prevSetlistSongId, fromSetlistId: viewing.fromSetlistId }) : null}
+          onNextSong={viewing?.fromSetlistId && nextSetlistSongId ? () => setViewing({ songId: nextSetlistSongId, fromSetlistId: viewing.fromSetlistId }) : null}
           fontSize={fontSize}
           textAlign={textAlign}
           bold={bold}
