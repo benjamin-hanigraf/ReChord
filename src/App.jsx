@@ -670,11 +670,21 @@ function PianoScreen() {
     gain.gain.linearRampToValueAtTime(peak, now + 0.008);
     gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 0.4), now + 0.4);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 7);
+    // Real piano strings carry proportionally fewer strong upper partials as
+    // pitch rises — a treble note is naturally purer/closer to a sine than a
+    // bass note. Opening the filter to a flat "9x the fundamental" for every
+    // note (regardless of register) lets high notes keep disproportionately
+    // loud high-frequency content relative to their own pitch, which is what
+    // reads as reedy/brassy up top. Taper the opening from wide (9x) at the
+    // bottom of the keyboard down to narrow (3x) at the top instead.
+    const t = Math.min(1, Math.max(0, (freq - 130) / (2000 - 130))); // ~C3 to ~B6
+    const openMult = 9 - t * 6; // 9x at the bottom, 3x at the top
+    const sustainMult = Math.max(1.4, openMult * 0.3);
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
     filter.Q.value = 0.6;
-    filter.frequency.setValueAtTime(Math.min(9000, freq * 9), now);
-    filter.frequency.exponentialRampToValueAtTime(Math.max(500, freq * 2), now + 2.2);
+    filter.frequency.setValueAtTime(Math.min(9000, freq * openMult), now);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(500, freq * sustainMult), now + 2.2);
     const osc = ctx.createOscillator();
     osc.setPeriodicWave(pianoWaveRef.current);
     osc.frequency.value = freq;
