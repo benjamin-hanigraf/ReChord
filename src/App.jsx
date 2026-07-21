@@ -3,7 +3,7 @@ import { useIndexedDbState, useLocalStorageState } from "./hooks/usePersistentSt
 import {
   Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, ChevronDown, Check, X,
   ListMusic, Layers, Minus, MoreVertical, AlignLeft, AlignCenter, AlignRight,
-  Settings as SettingsIcon, Upload, Download,
+  Settings as SettingsIcon, Upload, Download, ClipboardPaste,
 } from "lucide-react";
 
 /* =========================================================================
@@ -136,6 +136,77 @@ function decomposeKey(keyStr) {
   return { natural, accidental };
 }
 const composeKey = (natural, accidental) => natural + (accidental === "flat" ? "b" : accidental === "sharp" ? "#" : "");
+
+// The UI only allows sharp on naturals other than E/B, and flat on naturals
+// other than C/F (those are handled by the neighboring natural instead), so
+// a pasted key spelled outside that set needs to fall back to its enharmonic
+// equivalent (e.g. "E#" -> "F", "Cb" -> "B") rather than being dropped.
+const KEY_ENHARMONIC_FIX = { "E#": "F", "B#": "C", Cb: "B", Fb: "E" };
+
+// Parses a "/Key:" value like "B", "C#m", "Bbm", "F# Minor" into the natural
+// letter, accidental, and quality the Add/Edit Song form's Key controls use.
+// The natural + accidental spelling is kept exactly as typed (so "C#m" stays
+// "C sharp", it is not renormalized to "Db") except for the four combos the
+// form's Key controls don't support, which map to their enharmonic natural.
+function parseKeyPaste(raw) {
+  const m = String(raw || "").trim().match(/^([A-Ga-g])\s*([#b])?\s*(maj(?:or)?|min(?:or)?|m)?\.?$/i);
+  if (!m) return null;
+  let natural = m[1].toUpperCase();
+  let accChar = m[2] || "";
+  const combo = natural + accChar;
+  if (KEY_ENHARMONIC_FIX[combo]) { natural = KEY_ENHARMONIC_FIX[combo]; accChar = ""; }
+  const accidental = accChar === "#" ? "sharp" : accChar === "b" ? "flat" : "natural";
+  const qualityRaw = (m[3] || "").toLowerCase();
+  const quality = (qualityRaw === "m" || qualityRaw.startsWith("mi")) ? "Minor" : "Major";
+  return { natural, accidental, quality };
+}
+
+// Parses clipboard text of the form:
+//   /Title: ...
+//   /Artist: ...
+//   /Tempo: ...
+//   /Time Signature: 4/4
+//   /Key: C#m
+//   /Description: ...
+//   /Sections:
+//   #Intro
+//   1 - 5 - 6 5 - 4 (2)
+//   #Chorus
+//   ...
+// Fields ("/Name: value") missing from the text are simply left out of the
+// returned `fields` object, so callers only apply what's actually present.
+function parseSongClipboardText(raw) {
+  const lines = String(raw || "").replace(/\r\n/g, "\n").split("\n");
+  const fieldMap = { title: "title", artist: "artist", tempo: "tempo", "time signature": "timeSignature", key: "key", description: "description" };
+  const fields = {};
+  const sections = [];
+  let currentSection = null;
+  let inSections = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!inSections && trimmed.startsWith("/")) {
+      const body = trimmed.slice(1);
+      const colonIdx = body.indexOf(":");
+      if (colonIdx === -1) continue;
+      const name = body.slice(0, colonIdx).trim().toLowerCase();
+      const value = body.slice(colonIdx + 1).trim();
+      if (name === "sections") { inSections = true; continue; }
+      const key = fieldMap[name];
+      if (key && value) fields[key] = value;
+      continue;
+    }
+    if (!inSections) continue;
+    if (trimmed.startsWith("#")) {
+      currentSection = { id: uid(), label: trimmed.slice(1).trim(), numbers: "" };
+      sections.push(currentSection);
+    } else if (trimmed) {
+      if (!currentSection) { currentSection = { id: uid(), label: "", numbers: "" }; sections.push(currentSection); }
+      currentSection.numbers = currentSection.numbers ? currentSection.numbers + "\n" + trimmed : trimmed;
+    }
+  }
+  return { fields, sections };
+}
 
 function downloadJSON(filename, payload) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -781,6 +852,37 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
 
   const { dragX, leaving, handlers } = useEdgeSwipeBack(onCancel);
 
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()) return;
+      const { fields, sections: parsedSections } = parseSongClipboardText(text);
+      if (fields.title !== undefined) setTitle(fields.title);
+      if (fields.artist !== undefined) setArtist(fields.artist);
+      if (fields.tempo !== undefined) {
+        const digits = fields.tempo.replace(/[^\d]/g, "");
+        if (digits) setTempo(digits);
+      }
+      if (fields.timeSignature !== undefined) {
+        const m = fields.timeSignature.match(/^(\d+)\s*\/\s*(\d+)$/);
+        if (m) setTimeSig({ beats: parseInt(m[1], 10), unit: parseInt(m[2], 10) });
+      }
+      if (fields.key !== undefined) {
+        const parsedKey = parseKeyPaste(fields.key);
+        if (parsedKey) {
+          setKeyNatural(parsedKey.natural);
+          setKeyAccidental(parsedKey.accidental);
+          setKeyQuality(parsedKey.quality);
+        }
+      }
+      if (fields.description !== undefined) setDescription(fields.description);
+      if (parsedSections.length) setSections(parsedSections);
+      setError("");
+    } catch (err) {
+      setError("Couldn't read clipboard");
+    }
+  };
+
   const handleNaturalChange = (n) => {
     setKeyNatural(n);
     if (keyAccidental === "sharp" && (n === "E" || n === "B")) setKeyAccidental("natural");
@@ -824,6 +926,10 @@ function SongForm({ initial, onSave, onCancel, onDelete, songs }) {
           <ChevronLeft size={22} />
         </button>
         <div style={{ fontSize: 17, fontWeight: 600 }}>{initial ? "Edit Song" : "Add Song"}</div>
+        <div style={{ flex: 1 }} />
+        <button onClick={handlePasteFromClipboard} title="Paste song from clipboard" style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 6 }}>
+          <ClipboardPaste size={20} />
+        </button>
       </div>
 
       <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18, paddingBottom: 60 }}>
