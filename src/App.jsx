@@ -928,17 +928,21 @@ function useEdgeSwipeBack(onBack) {
    after ~8px of movement: if the gesture turns out to be more vertical than
    horizontal, it's treated as a scroll and nav is skipped for the rest of
    that touch, so scrolling through lyrics never accidentally flips songs.
+   Unlike edge-swipe-back, this never visually drags the page along with the
+   finger (which would reveal the setlist stage behind it) — it just snaps
+   straight to the next/previous song once the swipe clears the threshold.
    ========================================================================= */
 function useSetlistSongSwipe(onPrev, onNext) {
-  const [dragX, setDragX] = useState(0);
   const draggingRef = useRef(false);
   const startRef = useRef({ x: 0, y: 0 });
+  const dxRef = useRef(0);
   const directionRef = useRef(null); // null | "x" | "y"
 
   const handleTouchStart = (e) => {
     if (e.touches.length !== 1) return;
     startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     directionRef.current = null;
+    dxRef.current = 0;
     draggingRef.current = true;
   };
   const handleTouchMove = (e) => {
@@ -950,21 +954,22 @@ function useSetlistSongSwipe(onPrev, onNext) {
       directionRef.current = Math.abs(dy) > Math.abs(dx) ? "y" : "x";
     }
     if (directionRef.current === "y") return; // already scrolling — leave nav alone
-    setDragX(dx);
+    dxRef.current = dx;
   };
   const handleTouchEnd = () => {
     const wasHorizontal = directionRef.current === "x";
+    const dx = dxRef.current;
     draggingRef.current = false;
     directionRef.current = null;
+    dxRef.current = 0;
     if (wasHorizontal) {
-      if (dragX > 70 && onPrev) onPrev();
-      else if (dragX < -70 && onNext) onNext();
+      if (dx > 70 && onPrev) onPrev();
+      else if (dx < -70 && onNext) onNext();
     }
-    setDragX(0);
   };
 
   return {
-    dragX,
+    dragX: 0,
     handlers: { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd, onTouchCancel: handleTouchEnd },
   };
 }
