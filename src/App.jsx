@@ -47,6 +47,13 @@ const KEY_TO_SEMITONE = {
 };
 const MAJOR_SCALE_OFFSETS = [0, 2, 4, 5, 7, 9, 11];
 const MINOR_SCALE_OFFSETS = [0, 2, 3, 5, 7, 8, 10]; // natural minor
+// Diatonic triad quality for each scale degree (1-7), used whenever a number
+// has no explicit quality/accidental of its own — e.g. plain "6" in a major
+// key is the vi chord, which is minor (so it becomes "Em" in the key of G,
+// not "E"). Major key: I ii iii IV V vi vii°. Natural-minor key: i ii° III
+// iv v VI VII.
+const MAJOR_KEY_DEGREE_QUALITIES = ["", "m", "m", "", "", "m", "dim"];
+const MINOR_KEY_DEGREE_QUALITIES = ["m", "dim", "", "m", "m", "", ""];
 const ALL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
 function spellNote(semitone, useFlats) {
@@ -60,6 +67,7 @@ function tokenToChord(token, key, quality) {
   const semitoneRoot = KEY_TO_SEMITONE[key] ?? 0;
   const useFlats = FLAT_KEYS.has(key);
   const scaleOffsets = quality === "Minor" ? MINOR_SCALE_OFFSETS : MAJOR_SCALE_OFFSETS;
+  const degreeQualities = quality === "Minor" ? MINOR_KEY_DEGREE_QUALITIES : MAJOR_KEY_DEGREE_QUALITIES;
   const re = /^([b#]?)([1-7])((?:(?!\/)[^\s])*)(?:\/([b#]?)([1-7]))?$/;
   const m = trimmed.match(re);
   if (!m) return token;
@@ -68,7 +76,12 @@ function tokenToChord(token, key, quality) {
   const accShift = acc === "b" ? -1 : acc === "#" ? 1 : 0;
   const rootSemitone = semitoneRoot + scaleOffsets[degree - 1] + accShift;
   const rootUseFlats = acc === "b" ? true : acc === "#" ? false : useFlats;
-  let chord = spellNote(rootSemitone, rootUseFlats) + (qualitySuffix || "");
+  // Only fall back to the diatonic default when the number is unaltered
+  // (no leading b/#) and the user hasn't already written their own quality
+  // — an accidental signals a deliberate chromatic/borrowed chord, whose
+  // "correct" default quality isn't well-defined, so those are left as-is.
+  const defaultSuffix = acc ? "" : degreeQualities[degree - 1];
+  let chord = spellNote(rootSemitone, rootUseFlats) + (qualitySuffix || defaultSuffix);
   if (bassDegreeStr) {
     const bassDegree = parseInt(bassDegreeStr, 10);
     const bassShift = bassAcc === "b" ? -1 : bassAcc === "#" ? 1 : 0;
