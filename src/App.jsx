@@ -54,6 +54,10 @@ const MINOR_SCALE_OFFSETS = [0, 2, 3, 5, 7, 8, 10]; // natural minor
 // iv v VI VII.
 const MAJOR_KEY_DEGREE_QUALITIES = ["", "m", "m", "", "", "m", "dim"];
 const MINOR_KEY_DEGREE_QUALITIES = ["m", "dim", "", "m", "m", "", ""];
+// Explicit "force major" suffixes a user can type on a normally-minor/dim
+// degree (e.g. "6M", "6maj") to get the major triad instead. Lowercase "m"
+// is intentionally excluded — that already means "minor" everywhere else.
+const MAJOR_OVERRIDE_SUFFIXES = new Set(["M", "Maj", "maj", "major", "Major"]);
 const ALL_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 function spellNote(semitone, useFlats) {
@@ -76,12 +80,25 @@ function tokenToChord(token, key, quality) {
   const accShift = acc === "b" ? -1 : acc === "#" ? 1 : 0;
   const rootSemitone = semitoneRoot + scaleOffsets[degree - 1] + accShift;
   const rootUseFlats = acc === "b" ? true : acc === "#" ? false : useFlats;
+  // Church convention: a bare "7" in a Major key is voiced as 5/7 (the V
+  // chord over scale-degree-7 in the bass) instead of the default vii°.
+  // Explicit overrides (e.g. "7dim", or a manually-typed slash like "7/3")
+  // are left alone — this only fires when the user wrote a plain "7".
+  if (degree === 7 && quality !== "Minor" && !acc && !qualitySuffix && !bassDegreeStr) {
+    const fiveSemitone = semitoneRoot + scaleOffsets[4]; // scale degree 5
+    const sevenSemitone = semitoneRoot + scaleOffsets[6]; // scale degree 7 (bass)
+    return spellNote(fiveSemitone, useFlats) + "/" + spellNote(sevenSemitone, useFlats);
+  }
   // Only fall back to the diatonic default when the number is unaltered
   // (no leading b/#) and the user hasn't already written their own quality
   // — an accidental signals a deliberate chromatic/borrowed chord, whose
   // "correct" default quality isn't well-defined, so those are left as-is.
   const defaultSuffix = acc ? "" : degreeQualities[degree - 1];
-  let chord = spellNote(rootSemitone, rootUseFlats) + (qualitySuffix || defaultSuffix);
+  // "6M", "6maj", "6major", etc. force a plain major triad on a degree that
+  // would otherwise default to minor/diminished (e.g. vi -> VI, vii° -> VII).
+  const isMajorOverride = qualitySuffix && MAJOR_OVERRIDE_SUFFIXES.has(qualitySuffix);
+  const finalSuffix = isMajorOverride ? "" : (qualitySuffix || defaultSuffix);
+  let chord = spellNote(rootSemitone, rootUseFlats) + finalSuffix;
   if (bassDegreeStr) {
     const bassDegree = parseInt(bassDegreeStr, 10);
     const bassShift = bassAcc === "b" ? -1 : bassAcc === "#" ? 1 : 0;
