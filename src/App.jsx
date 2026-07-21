@@ -740,13 +740,38 @@ function PianoScreen() {
       paintKey(entry.keyEl, false);
       activeRef.current.delete(e.pointerId);
     };
+    // A PWA getting backgrounded (home button, app switcher, swipe-away)
+    // mid-keypress frequently does NOT fire a matching pointerup/pointercancel
+    // — the webview is just suspended. Without this, that voice's oscillator
+    // is left running (never explicitly .stop()ed) and, since iOS commonly
+    // *resumes* a suspended PWA rather than reloading it, that stuck near-
+    // silent voice is still live and still summed into ctx.destination when
+    // you reopen. Enough leaked voices piling up across sessions comb-filter
+    // against new notes and reinforce upper harmonics, which is what reads
+    // as the tone "turning brassy" the more times the app is reopened.
+    // visibilitychange fires reliably on backgrounding, regardless of
+    // whether a clean pointer-up ever happened, so we use it to force-stop
+    // everything and fully close the context rather than leaving it suspended.
+    const handleVisibility = () => {
+      if (document.visibilityState !== "hidden") return;
+      activeRef.current.forEach((v) => stopVoice(v.voice));
+      activeRef.current.clear();
+      if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+        audioCtxRef.current.close().catch(() => { });
+      }
+      audioCtxRef.current = null;
+      pianoWaveRef.current = null;
+      videoUnlockedRef.current = false;
+    };
     window.addEventListener("pointermove", handleMove, { passive: false });
     window.addEventListener("pointerup", handleUp);
     window.addEventListener("pointercancel", handleUp);
+    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("pointerup", handleUp);
       window.removeEventListener("pointercancel", handleUp);
+      document.removeEventListener("visibilitychange", handleVisibility);
       activeRef.current.forEach((v) => stopVoice(v.voice));
       activeRef.current.clear();
       // Without this, leaving the Piano tab (which unmounts this component)
