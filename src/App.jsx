@@ -54,7 +54,7 @@ const MINOR_SCALE_OFFSETS = [0, 2, 3, 5, 7, 8, 10]; // natural minor
 // iv v VI VII.
 const MAJOR_KEY_DEGREE_QUALITIES = ["", "m", "m", "", "", "m", "dim"];
 const MINOR_KEY_DEGREE_QUALITIES = ["m", "dim", "", "m", "m", "", ""];
-const ALL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const ALL_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 function spellNote(semitone, useFlats) {
   const s = ((semitone % 12) + 12) % 12;
